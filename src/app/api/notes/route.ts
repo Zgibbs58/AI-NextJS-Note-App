@@ -8,6 +8,8 @@ import {
 import { auth } from "@clerk/nextjs/server";
 // Import the Prisma client instance for database operations
 import prisma from "@/lib/db/prisma";
+import { getEmbedding } from "@/lib/openai";
+import { notesIndex } from "@/lib/db/pinecone";
 
 // Create a new note with the specified title and content
 export async function POST(req: Request) {
@@ -35,18 +37,32 @@ export async function POST(req: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Create a new note in the database with the title, content, and userId
-    const note = await prisma.note.create({
-      data: {
-        title,
-        content,
-        userId,
-      },
-    });
+    const embedding = await getEmbeddingForNote(title, content);
 
+    const note = await prisma.$transaction(async (tx) => {
+      const note = await tx.note.create({
+        data: {
+          title,
+          content,
+          userId,
+        },
+      });
+
+      await notesIndex.upsert([
+        {
+          id: note.id,
+          values: embedding,
+          metadata: { userId },
+        },
+      ]);
+
+      return note;
+    });
+    console.log("Note created successfully:", note);
     // Return the created note with a 201 Created status
-    return Response.json(note, { status: 201 });
+    return Response.json({ note }, { status: 201 });
   } catch (error) {
+    console.error("Internal server error:", error);
     // If an error occurs, return a 500 Internal Server Error response
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -140,4 +156,8 @@ export async function DELETE(req: Request) {
   } catch (error) {
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+async function getEmbeddingForNote(title: string, content: string | undefined) {
+  return getEmbedding(title + "\n\n" + (content || ""));
 }

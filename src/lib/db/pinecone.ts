@@ -1,14 +1,25 @@
 import { Pinecone } from "@pinecone-database/pinecone";
 
-const apiKey = process.env.PINECONE_API_KEY;
+const apiKeyVar = process.env.PINECONE_API_KEY;
 
-if (!apiKey) {
-  throw Error("PINECONE_API_KEY is not set.");
+if (!apiKeyVar) {
+  throw new Error("PINECONE_API_KEY is not set");
 }
 
-const pinecone = new Pinecone({
-  environment: "gcp-starter",
-  apiKey,
+const pc = new Pinecone({
+  apiKey: apiKeyVar,
 });
 
-export const notesIndex = pinecone.Index("ai-nextjs-note-app");
+export const notesIndex = pc.Index("ai-nextjs-note-app");
+
+// export const notesIndex = await pc.createIndex({
+//   name: "serverless-index",
+//   dimension: 1536,
+//   metric: "cosine",
+//   spec: {
+//     serverless: {
+//       cloud: "aws",
+//       region: "us-east-1",
+//     },
+//   },
+// });
