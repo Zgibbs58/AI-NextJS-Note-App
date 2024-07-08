@@ -27,7 +27,7 @@ export default function Note({ note }: NoteProps) {
   return (
     <>
       <Card
-        className="cursor-pointer transition-shadow hover:shadow-lg"
+        className="cursor-pointer transition duration-200 ease-in-out hover:shadow-lg dark:hover:bg-gray-800"
         onClick={() => setShowEditDialog(true)}
       >
         <CardHeader>

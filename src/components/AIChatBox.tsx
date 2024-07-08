@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useChat } from "ai/react";
-import { Bot, XCircle } from "lucide-react";
+import { Bot, Trash, XCircle } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Message } from "ai";
@@ -39,6 +39,8 @@ export default function AIChatBox({ open, onClose }: AIChatBoxProps) {
     }
   }, [open]);
 
+  const lastMessageIsUser = messages[messages.length - 1]?.role === "user";
+
   return (
     <div
       className={cn(
@@ -46,16 +48,45 @@ export default function AIChatBox({ open, onClose }: AIChatBoxProps) {
         open ? "fixed" : "hidden",
       )}
     >
-      <button onClick={onClose} className="mb-1 ms-auto block">
-        <XCircle size={30} />
-      </button>
-      <div className="flex h-[600px] flex-col rounded border-2 bg-background shadow-2xl shadow-gray-400">
+      <div className="flex h-[600px] flex-col rounded border-2 bg-background shadow-2xl">
+        <button onClick={onClose} className="mb-1 ms-auto block">
+          <XCircle size={30} />
+        </button>
         <div className="mt-3 h-full overflow-y-auto px-3" ref={scrollRef}>
           {messages.map((message) => (
             <ChatMessage message={message} key={message.id} />
           ))}
+          {isLoading && lastMessageIsUser && (
+            <ChatMessage
+              message={{ role: "assistant", content: "Thinking..." }}
+            />
+          )}
+          {error && (
+            <ChatMessage
+              message={{
+                role: "assistant",
+                content: "Something went wrong. Please try again.",
+              }}
+            />
+          )}
+          {!error && messages.length === 0 && (
+            <div className="flex h-full items-center justify-center gap-3">
+              <Bot />
+              Ask the AI a question about your notes.
+            </div>
+          )}
         </div>
-        <form action="" onSubmit={handleSubmit} className="m-3 flex gap-1">
+        <form onSubmit={handleSubmit} className="m-3 flex gap-3">
+          <Button
+            title="Clear Chat"
+            variant="outline"
+            size="icon"
+            className="shrink-0"
+            type="button"
+            onClick={() => setMessages([])}
+          >
+            <Trash />
+          </Button>
           <Input
             value={input}
             onChange={handleInputChange}
@@ -69,7 +100,11 @@ export default function AIChatBox({ open, onClose }: AIChatBoxProps) {
   );
 }
 
-function ChatMessage({ message: { role, content } }: { message: Message }) {
+function ChatMessage({
+  message: { role, content },
+}: {
+  message: Pick<Message, "role" | "content">;
+}) {
   const { user } = useUser();
 
   const isAiMessage = role === "assistant";
