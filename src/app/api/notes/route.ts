@@ -39,6 +39,8 @@ export async function POST(req: Request) {
 
     const embedding = await getEmbeddingForNote(title, content);
 
+    // Create a transaction to create the note and update the Pinecone index
+    // with the note's embedding and metadata (userId)
     const note = await prisma.$transaction(async (tx) => {
       const note = await tx.note.create({
         data: {
@@ -101,12 +103,26 @@ export async function PUT(req: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const updatedNote = await prisma.note.update({
-      where: { id },
-      data: {
-        title,
-        content,
-      },
+    const embedding = await getEmbeddingForNote(title, content);
+
+    const updatedNote = await prisma.$transaction(async (tx) => {
+      const updatedNote = await tx.note.update({
+        where: { id },
+        data: {
+          title,
+          content,
+        },
+      });
+
+      await notesIndex.upsert([
+        {
+          id,
+          values: embedding,
+          metadata: { userId },
+        },
+      ]);
+
+      return updatedNote;
     });
 
     return Response.json(updatedNote, { status: 200 });
@@ -148,8 +164,11 @@ export async function DELETE(req: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await prisma.note.delete({
-      where: { id },
+    await prisma.$transaction(async (tx) => {
+      await tx.note.delete({
+        where: { id },
+      });
+      await notesIndex.deleteOne(id);
     });
 
     return Response.json({ message: "Note Deleted" }, { status: 200 });
