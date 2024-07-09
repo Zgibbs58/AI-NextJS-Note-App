@@ -42,6 +42,10 @@ npm install
 npm run dev
 ```
 
+## Link For Migrating to New Pinecone API
+
+[Pinecone API Docs](https://docs.pinecone.io/guides/operations/migrate-to-the-new-api#create-a-serverless-index)
+
 ## Deployed Link
 
 [Vercel Deployed Link](https://ai-next-js-note-app.vercel.app/)
