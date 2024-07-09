@@ -11,15 +11,3 @@ const pc = new Pinecone({
 });
 
 export const notesIndex = pc.Index("ai-nextjs-note-app");
-
-// export const notesIndex = await pc.createIndex({
-//   name: "serverless-index",
-//   dimension: 1536,
-//   metric: "cosine",
-//   spec: {
-//     serverless: {
-//       cloud: "aws",
-//       region: "us-east-1",
-//     },
-//   },
-// });

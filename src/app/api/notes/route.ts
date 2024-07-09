@@ -60,11 +60,12 @@ export async function POST(req: Request) {
 
       return note;
     });
-    console.log("Note created successfully:", note);
+    // console.log("Note created successfully:", note);
     // Return the created note with a 201 Created status
     return Response.json({ note }, { status: 201 });
   } catch (error) {
-    console.error("Internal server error:", error);
+    // Use line below to log specific errors for debugging
+    // console.error("Internal server error:", error);
     // If an error occurs, return a 500 Internal Server Error response
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }
